@@ -1,13 +1,36 @@
 var chai = require('chai');
 var expect = require('chai').expect;
+var mongoose = require('mongoose');
+var Cat = require('../model/cats.js');
+var	Dog = require('../model/dogs.js');
 var chaiHttp = require('chai-http');
 var server = require('../server.js');
-var fileCount;
-var jsonFile;
+
+process.env.MONGO_URL = 'mongodb://localhost/testDB'
 
 chai.use(chaiHttp);
 
 describe('http server', function(){
+	
+	before(function(done) {
+		var cat = new Cat({name: 'ABC', age: 4, cuteness: 9, friends: [], enemies: []});
+		cat.save(cat, function(err) {
+			if (err) {
+				errorHandler(err);
+			} 
+			else {
+				console.log('saved');
+			}
+			done();
+		});
+	});
+	
+	after(function(done) {
+		mongoose.connection.db.dropDatabase(function(err) {
+			console.log('test database is dropped');
+			done();
+		});
+	})
 	
 	it ('add a new cat', function(done) {
 		chai.request('localhost:8080/cat')
@@ -43,7 +66,6 @@ describe('http server', function(){
 	it ('successfully update a cat', function(done) {
 		chai.request('localhost:8080')
 		.put('/cat/Cutie') 
-//		.query({name: 'Cutie'}) 
 		.send({cuteness: 3})
 		.end(function (err, res) {
 			expect(err).to.be.null;

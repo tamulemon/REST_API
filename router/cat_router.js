@@ -103,35 +103,80 @@ catRouter.put('/addfriend/:catName', function(req, res) {
 
 
 // add enemy from dogs collection, multi: true, save objectID to the enemies array
-catRouter.put('/addenemy/:catName', function(req, res) {
+
 	// find will always return array, so need to use forEach method
-	Cat.find({name: req.params.catName}, function(err, cat) {
-		if (err) {
-			errorHandler(err);
+//	Cat.find({name: req.params.catName}, function(err, cat) {
+//		if (err) {
+//			errorHandler(err);
+//			res.status(404);
+//			res.json({msg: 'Couldn\'t add enemy.'});
+//		} 
+//		else {
+////			console.log(cat); 
+//			Dog.find({name: req.body['name']}, function(error, dog) {
+//				if (error) {
+//					errorHandler(error);
+//					res.status(404);
+//					res.json({msg: 'Couldn\'t find the dog.'});
+//				}
+//				else {
+//					cat.forEach(function(one) {
+//						console.log(one.enemies);
+//						for (var i = 0; i < dog.length; i++) {
+//							one.enemies.push(dog[i]._id);
+//						}
+//						one.save(); // have to save
+//					});
+//					res.json({msg: 'Enemy is successfully added.'});
+//				}
+//			});
+//		}
+//	});
+catRouter.put('/addenemy/:catName', function(req, res) {
+	
+	var fetchDog = function(dogName, callback){
+		Dog.find({name: dogName}, function(err, data) {
+			if (err) {
+				callback(err);
+			}
+			else {
+				callback(null, data);
+			}
+		});
+	};
+	
+	var updateCat = function(err, dogData) {
+		if(err) {
+			errorHandler(error);
 			res.status(404);
-			res.json({msg: 'Couldn\'t add enemy.'});
+			res.json({msg: 'Couldn\'t find the dog.'});
 		} 
 		else {
-//			console.log(cat); 
-			Dog.find({name: req.body['name']}, function(error, dog) {
-				if (error) {
-					errorHandler(error);
+			
+			var dogIDs = [];
+			dogData.forEach(function(adog) {
+				dogIDs.push(adog._id);
+			});
+			
+			if(dogIDs.length === 0) {
+				res.json({msg: 'There is not dog with such name'});
+				return;
+			}
+			
+			Cat.update({name: req.params.catName}, {$pushAll: {enemies: dogIDs}}, {multi: true}, function(err, catData) {
+				if (err) {
+					errorHandler(err);
 					res.status(404);
-					res.json({msg: 'Couldn\'t find the dog.'});
-				}
+					res.json({msg: 'Couldn\'t add enemies to your cat.'});
+				} 
 				else {
-					cat.forEach(function(one) {
-						console.log(one.enemies);
-						for (var i = 0; i < dog.length; i++) {
-							one.enemies.push(dog[i]._id);
-						}
-						one.save(); // have to save
-					});
 					res.json({msg: 'Enemy is successfully added.'});
 				}
 			});
 		}
-	});
+	};
+	
+	fetchDog(req.body.name, updateCat);
 });
 
 

@@ -5,7 +5,7 @@ var express = require('express'),
 		port = process.env.port || 8080,
 		mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost/cat_dog');
+mongoose.connect(process.env.MONGO_URL || 'mongodb://localhost/cat_dog');
 
 app.use(bodyParser.json());
 
